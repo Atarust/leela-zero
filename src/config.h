@@ -19,6 +19,8 @@
 #ifndef CONFIG_H_INCLUDED
 #define CONFIG_H_INCLUDED
 
+#define USE_CPU_ONLY
+
 /*
  * We need to check for input while we are thinking.
  * That code isn't portable, so select something appropriate for the system.
