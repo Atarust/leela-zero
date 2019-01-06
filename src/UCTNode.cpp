@@ -273,8 +273,9 @@ UCTNode* UCTNode::uct_select_child(int color, bool is_root) {
         }
     }
     
-    // most likely move is pass. So it might be good to not make any adjustments
-    bool pass_is_most_likely = max_move == -1;
+    // most likely move is pass or resign. Probably make no adjustments
+    bool pass_is_most_likely = max_move == -1 || max_move == -2;
+    
 
     for (auto& child : m_children) {
         if (!child.active()) {
@@ -291,10 +292,9 @@ UCTNode* UCTNode::uct_select_child(int color, bool is_root) {
         }
         auto psa = child.get_policy();
 
-
         // manipulate psa to initially look only at tengen or mirror move.
         bool is_mirror = (440 - child.get_move()) % 440 == m_move;
-        bool is_tengen = child.get_move() == 220;
+        bool is_tengen = child.get_move() == (10+1)*19+(10+1);
 
         bool is_fraction_tengen = get_visits() % cfg_fraction_tengen == 0;
         bool is_fraction_mirror = get_visits() % cfg_fraction_mirror == 0;
