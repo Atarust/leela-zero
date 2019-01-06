@@ -262,12 +262,19 @@ UCTNode* UCTNode::uct_select_child(int color, bool is_root) {
 
     // get max psa of childs
     float max_psa = 0.0f;
+
+    // todo should be max_child, but c++.
+    auto max_move = m_children.front().get_move();
     for (auto& child : m_children) {
         auto psa_child = child.get_policy();
         if (psa_child > max_psa){
             max_psa = psa_child;
+            max_move = child.get_move();
         }
     }
+    
+    // most likely move is pass. So it might be good to not make any adjustments
+    bool pass_is_most_likely = max_move == -1;
 
     for (auto& child : m_children) {
         if (!child.active()) {
@@ -292,17 +299,16 @@ UCTNode* UCTNode::uct_select_child(int color, bool is_root) {
         bool is_fraction_tengen = get_visits() % cfg_fraction_tengen == 0;
         bool is_fraction_mirror = get_visits() % cfg_fraction_mirror == 0;
         
-        if (is_tengen && get_visits() < cfg_visit_tengen && is_fraction_tengen){
+        if (is_tengen && get_visits() < cfg_visit_tengen && is_fraction_tengen && !pass_is_most_likely){
                 if (cfg_add_tengen < 0){
                     // add max_psa instead of psa given by arguments
                     psa = max_psa;
                 } else {
                     psa += cfg_add_tengen;
                 }
-                
         }
 
-        if (color == FastBoard::WHITE && is_mirror && get_visits() < cfg_visit_mirror && is_fraction_mirror){
+        if (color == FastBoard::WHITE && is_mirror && get_visits() < cfg_visit_mirror && is_fraction_mirror && !pass_is_most_likely){
                 if (cfg_add_mirror < 0){
                     // add max_psa instead of psa given by arguments
                     psa = max_psa;
