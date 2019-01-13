@@ -214,6 +214,49 @@ float UCTNode::get_raw_eval(int tomove, int virtual_loss) const {
     return eval;
 }
 
+float UCTNode::calc_dominance(UCTNodePointer& child, int tomove) const {
+    // calculates the average dominance for the given child
+    // average probabilities P(Reward(a) > Reward(b))
+    auto rewards_action = child.get_blackeval_vector();
+    auto probs = 0.0f;
+    for (auto& c : m_children) {
+        if(child.get_move() == c.get_move()){
+            // child == c
+            continue;
+        }
+        if(c.is_inflated()){
+            probs = probs + prob_higher(rewards_action, c.get_blackeval_vector());
+        } else {
+            // not inflated, visits=0
+            // TODO: what to do, if action has not been visited yet?
+        }
+    }
+    auto eval = probs/static_cast<float>(rewards_action.size() - 1);
+    // show value from the view according to color.
+    if (tomove == FastBoard::WHITE) {
+        eval = 1.0f - eval;
+    }
+    return eval;
+}
+
+float UCTNode::prob_higher(std::vector<double> rewards_a, std::vector<double> rewards_b) const {
+    // P(Reward(a) > Reward(b)) : probability that reward of action a is higher than reward of action b
+    auto comparisons = 0;
+    if ((rewards_a.size() == 0) & (rewards_b.size() == 0)){
+        printf("Error: inflated node has no rewards yet.");
+        assert(false);
+        return 0;
+    }
+    for (auto &r_a : rewards_a){
+        for (auto &r_b : rewards_b){
+            if(r_a > r_b){
+                comparisons++;
+            }
+        }
+    }
+    return static_cast<float>(comparisons)/(rewards_a.size()*rewards_b.size());
+}
+
 float UCTNode::get_eval(int tomove) const {
     // Due to the use of atomic updates and virtual losses, it is
     // possible for the visit count to change underneath us. Make sure
@@ -228,12 +271,25 @@ float UCTNode::get_net_eval(int tomove) const {
     return m_net_eval;
 }
 
+double UCTNode::mean(std::vector<double> vector) const {
+    return std::accumulate(vector.begin(), vector.end(), 0.0) / vector.size();
+}
+
+double UCTNode::sum(std::vector<double> vector) const {
+    return std::accumulate(vector.begin(), vector.end(), 0.0);
+}
+
 double UCTNode::get_blackevals() const {
     return m_blackevals;
 }
 
+std::vector<double> UCTNode::get_blackeval_vector() const {
+    return m_blackeval_vector;
+}
+
 void UCTNode::accumulate_eval(float eval) {
     atomic_add(m_blackevals, double(eval));
+    //atomic_append(m_blackeval_vector, double(eval));
 }
 
 UCTNode* UCTNode::uct_select_child(int color, bool is_root) {
@@ -271,6 +327,7 @@ UCTNode* UCTNode::uct_select_child(int color, bool is_root) {
             winrate = -1.0f - fpu_reduction;
         } else if (child.get_visits() > 0) {
             winrate = child.get_eval(color);
+            //winrate = calc_dominance(child, color);
         }
         const auto psa = child.get_policy();
         const auto denom = 1.0 + child.get_visits();

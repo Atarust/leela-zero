@@ -66,7 +66,10 @@ public:
     float get_policy() const;
     void set_policy(float policy);
     float get_eval(int tomove) const;
+    std::vector<double> get_blackeval_vector() const;
     float get_raw_eval(int tomove, int virtual_loss = 0) const;
+    float calc_dominance(UCTNodePointer& child, int tomove) const;
+    float prob_higher(std::vector<double> rewards_a, std::vector<double> rewards_b) const;
     float get_net_eval(int tomove) const;
     void virtual_loss();
     void virtual_loss_undo();
@@ -93,6 +96,8 @@ private:
     void link_nodelist(std::atomic<int>& nodecount,
                        std::vector<Network::PolicyVertexPair>& nodelist,
                        float min_psa_ratio);
+    double mean(std::vector<double>) const;
+    double sum(std::vector<double>) const;
     double get_blackevals() const;
     void accumulate_eval(float eval);
     void kill_superkos(const KoState& state);
@@ -112,6 +117,7 @@ private:
     // Original net eval for this node (not children).
     float m_net_eval{0.0f};
     std::atomic<double> m_blackevals{0.0};
+    std::vector<double> m_blackeval_vector;
     std::atomic<Status> m_status{ACTIVE};
 
     // m_expand_state acts as the lock for m_children.

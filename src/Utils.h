@@ -21,6 +21,7 @@
 
 #include "config.h"
 
+#include <vector>
 #include <atomic>
 #include <limits>
 #include <string>
@@ -43,6 +44,11 @@ namespace Utils {
         T old = f.load();
         while (!f.compare_exchange_weak(old, old + d));
     }
+    template<class T>
+    void atomic_append(std::vector<T> &f, T d) {
+        f.push_back(d);
+    }
+
 
     template<typename T>
     T rotl(const T x, const int k) {
