@@ -242,10 +242,11 @@ float UCTNode::calc_dominance(UCTNodePointer& child, int tomove) const {
 float UCTNode::prob_higher(std::vector<double> rewards_a, std::vector<double> rewards_b) const {
     // P(Reward(a) > Reward(b)) : probability that reward of action a is higher than reward of action b
     auto comparisons = 0;
-    if ((rewards_a.size() == 0) & (rewards_b.size() == 0)){
-        printf("Error: inflated node has no rewards yet.");
-        assert(false);
+    if ((rewards_a.size() == 0)){
         return 0;
+    }
+    if ((rewards_b.size() == 0)){
+        return 1;
     }
     for (auto &r_a : rewards_a){
         for (auto &r_b : rewards_b){
@@ -289,7 +290,7 @@ std::vector<double> UCTNode::get_blackeval_vector() const {
 
 void UCTNode::accumulate_eval(float eval) {
     atomic_add(m_blackevals, double(eval));
-    //atomic_append(m_blackeval_vector, double(eval));
+    atomic_append(m_blackeval_vector, double(eval));
 }
 
 UCTNode* UCTNode::uct_select_child(int color, bool is_root) {
@@ -325,9 +326,9 @@ UCTNode* UCTNode::uct_select_child(int color, bool is_root) {
             // Someone else is expanding this node, never select it
             // if we can avoid so, because we'd block on it.
             winrate = -1.0f - fpu_reduction;
-        } else if (child.get_visits() > 0) {
-            winrate = child.get_eval(color);
-            //winrate = calc_dominance(child, color);
+        } else if (true) {
+            //winrate = child.get_eval(color);
+            winrate = calc_dominance(child, color);
         }
         const auto psa = child.get_policy();
         const auto denom = 1.0 + child.get_visits();
