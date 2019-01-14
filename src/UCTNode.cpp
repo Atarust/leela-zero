@@ -251,6 +251,7 @@ float UCTNode::prob_higher(std::vector<double> rewards_a, std::vector<double> re
     for (auto &r_a : rewards_a){
         for (auto &r_b : rewards_b){
             if(r_a > r_b){
+                printf("compare: [%lf > %lf]\n", r_a, r_b);
                 comparisons++;
             }
         }
@@ -332,7 +333,9 @@ UCTNode* UCTNode::uct_select_child(int color, bool is_root) {
         }
         const auto psa = child.get_policy();
         const auto denom = 1.0 + child.get_visits();
-        const auto puct = cfg_puct * psa * (numerator / denom);
+        const auto puct = 0.8 * psa * (numerator / denom);
+        printf("parent=%i, child=%i winrate=%lf, puct=%lf\n", m_move, child.get_move(), winrate, puct);
+        
         const auto value = winrate + puct;
         assert(value > std::numeric_limits<double>::lowest());
 

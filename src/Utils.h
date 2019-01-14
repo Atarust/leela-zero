@@ -49,7 +49,6 @@ namespace Utils {
         f.push_back(d);
     }
 
-
     template<typename T>
     T rotl(const T x, const int k) {
         return (x << k) | (x >> (std::numeric_limits<T>::digits - k));
