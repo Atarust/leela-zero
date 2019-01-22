@@ -225,7 +225,8 @@ float UCTNode::calc_dominance(UCTNodePointer& child, int tomove) const {
             continue;
         }
         if(c.is_inflated()){
-            probs = probs + prob_higher(rewards_action, c.get_blackeval_vector());
+            auto b_vec = c.get_blackeval_vector();
+            probs = probs + prob_higher(rewards_action, b_vec);
         } else {
             // not inflated, visits=0
             // TODO: what to do, if action has not been visited yet?
@@ -246,7 +247,7 @@ float UCTNode::prob_higher(std::vector<double> rewards_a, std::vector<double> re
         return 0;
     }
     if ((rewards_b.size() == 0)){
-        return 1;
+        return 0;
     }
     for (auto &r_a : rewards_a){
         for (auto &r_b : rewards_b){
@@ -286,7 +287,10 @@ double UCTNode::get_blackevals() const {
 }
 
 std::vector<double> UCTNode::get_blackeval_vector() const {
-    return m_blackeval_vector;
+    //printf("probably here:");
+    std::vector<double> temp = this->m_blackeval_vector;
+    //printf("probably here: end\n");
+    return temp;
 }
 
 void UCTNode::accumulate_eval(float eval) {
@@ -334,9 +338,9 @@ UCTNode* UCTNode::uct_select_child(int color, bool is_root) {
         const auto psa = child.get_policy();
         const auto denom = 1.0 + child.get_visits();
         const auto puct = 0.8 * psa * (numerator / denom);
-        printf("parent=%i, child=%i winrate=%lf, puct=%lf\n", m_move, child.get_move(), winrate, puct);
-        
         const auto value = winrate + puct;
+        printf("parent=%i, child=%i : value=%lf = winrate=%lf + puct=%lf\n", m_move, child.get_move(), value, winrate, puct);
+        
         assert(value > std::numeric_limits<double>::lowest());
 
         if (value > best_value) {

@@ -117,7 +117,7 @@ private:
     // Original net eval for this node (not children).
     float m_net_eval{0.0f};
     std::atomic<double> m_blackevals{0.0};
-    std::vector<double> m_blackeval_vector;
+    std::vector<double> m_blackeval_vector{};
     std::atomic<Status> m_status{ACTIVE};
 
     // m_expand_state acts as the lock for m_children.

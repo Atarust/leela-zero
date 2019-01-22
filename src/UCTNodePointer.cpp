@@ -144,7 +144,8 @@ std::vector<double> UCTNodePointer::get_blackeval_vector() const {
     // this can only be called if it is an inflated pointer
     auto v = m_data.load();
     assert(is_inflated(v));
-    return read_ptr(v)->get_blackeval_vector();
+    std::vector<double> temp = read_ptr(v)->get_blackeval_vector();
+    return temp;
 }
 
 
