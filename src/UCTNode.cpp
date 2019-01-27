@@ -272,9 +272,18 @@ UCTNode* UCTNode::uct_select_child(int color, bool is_root) {
         } else if (child.get_visits() > 0) {
             winrate = child.get_eval(color);
         }
-        const auto psa = child.get_policy();
+        auto psa = child.get_policy();
         const auto denom = 1.0 + child.get_visits();
-        const auto puct = cfg_puct * psa * (numerator / denom);
+
+        //psa = (is_root ? pow(psa, 0.8) : psa);
+        const auto puct = 2 * psa * (numerator / denom);
+        
+        //auto fairness_cost = (0.01 * child.get_visits());
+
+        
+        auto fairness_cost = pow(1.005, pow(child.get_visits(), 0.5)) - 1;
+        
+        fairness_cost = (is_root ? fairness_cost : 0);
         const auto value = winrate + puct;
         assert(value > std::numeric_limits<double>::lowest());
 
