@@ -256,6 +256,20 @@ UCTNode* UCTNode::uct_select_child(int color, bool is_root) {
     // Estimated eval for unknown nodes = original parent NN eval - reduction
     const auto fpu_eval = get_net_eval(color) - fpu_reduction;
 
+
+    // best child should get psa==0.
+    auto highest_psa = std::numeric_limits<double>::lowest();
+    auto highest_child = static_cast<UCTNodePointer*>(nullptr);
+    for (auto& child : m_children){
+        auto psa = child.get_policy();
+        if (psa > highest_psa){
+            highest_psa = psa;
+            highest_child = &child;
+        }
+    }
+
+
+
     auto best = static_cast<UCTNodePointer*>(nullptr);
     auto best_value = std::numeric_limits<double>::lowest();
 
@@ -272,7 +286,12 @@ UCTNode* UCTNode::uct_select_child(int color, bool is_root) {
         } else if (child.get_visits() > 0) {
             winrate = child.get_eval(color);
         }
-        const auto psa = child.get_policy();
+        auto psa = child.get_policy();
+        if ((child.get_move() == highest_child->get_move()) & is_root){
+            // this child is best so far -> don't use it in root
+            psa = 0;
+            winrate = 0;
+        }
         const auto denom = 1.0 + child.get_visits();
         const auto puct = cfg_puct * psa * (numerator / denom);
         const auto value = winrate + puct;
