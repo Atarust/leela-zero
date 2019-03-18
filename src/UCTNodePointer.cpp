@@ -139,7 +139,7 @@ float UCTNodePointer::get_eval(int tomove) const {
     return read_ptr(v)->get_eval(tomove);
 }
 
-std::vector<double> UCTNodePointer::get_blackeval_vector() const {
+std::vector<double> UCTNodePointer::get_blackeval_vector_ptr() const {
     // to access blackevals, even when you only have a UCTNodePointer
     // this can only be called if it is an inflated pointer
     auto v = m_data.load();

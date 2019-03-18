@@ -18,6 +18,7 @@
 
 #include "config.h"
 
+#include <iostream>
 #include <cassert>
 #include <cstdio>
 #include <cstdint>
@@ -217,15 +218,16 @@ float UCTNode::get_raw_eval(int tomove, int virtual_loss) const {
 float UCTNode::calc_dominance(UCTNodePointer& child, int tomove) const {
     // calculates the average dominance for the given child
     // average probabilities P(Reward(a) > Reward(b))
-    auto rewards_action = child.get_blackeval_vector();
-    auto probs = 0.0f;
+    auto rewards_action = child.get_blackeval_vector_ptr();
+    auto probs = 0.0f; // sum over all siblings, of the probability of child being better than its sibling.
     for (auto& c : m_children) {
         if(child.get_move() == c.get_move()){
-            // child == c
+            // child == c, don't compare with itself
             continue;
         }
         if(c.is_inflated()){
-            auto b_vec = c.get_blackeval_vector();
+            auto b_vec = c.get_blackeval_vector_ptr();
+            // add probability of the child action having higher rewards than its sibling c.
             probs = probs + prob_higher(rewards_action, b_vec);
         } else {
             // not inflated, visits=0
@@ -287,15 +289,25 @@ double UCTNode::get_blackevals() const {
 }
 
 std::vector<double> UCTNode::get_blackeval_vector() const {
-    //printf("probably here:");
-    std::vector<double> temp = this->m_blackeval_vector;
-    //printf("probably here: end\n");
+    // debug
+    printf("\nprinting m_blackeval_vector: ");
+    for (std::vector<double>::const_iterator i = m_blackeval_vector.begin(); i != m_blackeval_vector.end(); ++i)
+        std::cout << *i << ' ';
+    printf(" without error.\n");
+    
+    std::vector<double> temp = m_blackeval_vector;
     return temp;
 }
 
 void UCTNode::accumulate_eval(float eval) {
     atomic_add(m_blackevals, double(eval));
     atomic_append(m_blackeval_vector, double(eval));
+
+    // debug
+    printf("\nprinting m_blackeval_vector: ");
+    for (std::vector<double>::const_iterator i = m_blackeval_vector.begin(); i != m_blackeval_vector.end(); ++i)
+        std::cout << *i << ' ';
+    printf(" without error.\n");
 }
 
 UCTNode* UCTNode::uct_select_child(int color, bool is_root) {
@@ -331,15 +343,14 @@ UCTNode* UCTNode::uct_select_child(int color, bool is_root) {
             // Someone else is expanding this node, never select it
             // if we can avoid so, because we'd block on it.
             winrate = -1.0f - fpu_reduction;
-        } else if (true) {
+        } else if (true) { // } else if (child.get_visits() > 0) {
             //winrate = child.get_eval(color);
             winrate = calc_dominance(child, color);
         }
         const auto psa = child.get_policy();
         const auto denom = 1.0 + child.get_visits();
-        const auto puct = 0.8 * psa * (numerator / denom);
+        const auto puct = cfg_puct * psa * (numerator / denom);
         const auto value = winrate + puct;
-        printf("parent=%i, child=%i : value=%lf = winrate=%lf + puct=%lf\n", m_move, child.get_move(), value, winrate, puct);
         
         assert(value > std::numeric_limits<double>::lowest());
 
