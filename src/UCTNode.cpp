@@ -275,22 +275,17 @@ UCTNode* UCTNode::uct_select_child(int color, bool is_root) {
         auto psa = child.get_policy();
         const auto denom = 1.0 + child.get_visits();
 
-        //psa = (is_root ? pow(psa, 0.8) : psa);
         const auto puct = 2 * psa * (numerator / denom);
         
-        //auto fairness_cost = (0.01 * child.get_visits());
-
-        
         auto fairness_cost = 0;
-        //fairness_cost = pow(1.05, pow(child.get_visits(), 0.5)) - 1;
 
         // don't allow a root move to have much more than 30% of all the visits. To make sure the blue move is 
         // always the highest, add some winrate to the 30%.
-        if (is_root && (child.get_visits()/double(parentvisits) > 0.3+0.1*winrate)){
+        auto fairness_ratio = 0.3 + 0.1*winrate;
+        if (is_root && (child.get_visits()/double(parentvisits) > fairness_ratio)){
             fairness_cost = 1; // dont visit.
         }
 
-        fairness_cost = (is_root ? fairness_cost : 0);
         const auto value = winrate + puct - fairness_cost;
         assert(value > std::numeric_limits<double>::lowest());
 
