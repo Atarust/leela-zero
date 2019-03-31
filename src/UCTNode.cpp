@@ -18,6 +18,7 @@
 
 #include "config.h"
 
+#include <fstream>
 #include <cassert>
 #include <cstdio>
 #include <cstdint>
@@ -282,6 +283,36 @@ UCTNode* UCTNode::uct_select_child(int color, bool is_root) {
             best_value = value;
             best = &child;
         }
+
+    }
+
+    if(is_root){
+        // if is root, then log information about child:
+
+        auto net_wr = 0; // TODO
+        if(best->is_inflated()){
+            net_wr = best->get()->m_net_eval;
+        }
+
+        auto wr = 0; // TODO
+        if(best->is_inflated()){
+            wr = best->get_eval(color);
+        }
+
+        std::ofstream outfile;
+        outfile.open("leela_log.csv", std::ios_base::app);
+        // boardstate_id,cfg_puct,wr_parent_from_net,move,color,net_wr,psa,wr,value,visits,parentvisits\n
+        outfile << "board_id" << ","
+            << cfg_puct << ","
+            << get_net_eval(color) << ","
+            << best->get_move() << ","
+            << color << ","
+            << net_wr << ","
+            << best->get_policy() << ","
+            << wr << ","
+            << best_value << ","
+            << best->get_visits() << ","
+            << parentvisits << "\n";
     }
 
     assert(best != nullptr);
