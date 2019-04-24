@@ -337,7 +337,7 @@ UCTNode* UCTNode::uct_select_child(int color, bool is_root) {
         auto psa = child.get_policy();
         const auto denom = 1.0 + child.get_visits();
 
-        const auto puct = 2 * psa * (numerator / denom);
+        const auto puct = cfg_puct * psa * (numerator / denom);
         
         auto fairness_cost = 0;
 
